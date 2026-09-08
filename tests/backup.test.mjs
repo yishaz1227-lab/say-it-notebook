@@ -1,0 +1,13 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const js=ts.transpile(readFileSync(new URL('../lib/store.ts',import.meta.url),'utf8'),{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+const {encodeBackup,decodeBackup}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+globalThis.FileReader=class{readAsDataURL(blob){blob.arrayBuffer().then(buffer=>{this.result=`data:${blob.type};base64,${Buffer.from(buffer).toString('base64')}`;this.onload()})}};
+const base={format:'say-it',version:2};
+const original={id:'e1',kind:'excerpt',updated:1,body:'第一段\n第二段',title:'标题',tags:['日常']};
+test('backup round trip preserves multiple audio bytes and original snapshots',async()=>{const records=[original,...[1,2,3].map(n=>({id:'p'+n,kind:'practice',type:'audio',updated:n,parent:'e1',blob:new Blob([new Uint8Array([26,69,223,163,n])],{type:'audio/webm'}),snapshot:{body:n===1?'旧原文':original.body},mode:'看原文练习',started:n}))];const restored=await decodeBackup(await encodeBackup(records));assert.equal(restored.length,4);assert.equal(restored[0].body,original.body);assert.equal(restored[1].snapshot.body,'旧原文');for(let n=1;n<4;n++)assert.deepEqual(new Uint8Array(await restored[n].blob.arrayBuffer()),new Uint8Array([26,69,223,163,n]));});
+test('rejects missing media and orphan relationships before merge',async()=>{await assert.rejects(decodeBackup({...base,records:[{id:'p',kind:'practice',updated:1,parent:'missing',snapshot:{body:'x'}}]}));await assert.rejects(decodeBackup({...base,records:[{id:'x',kind:'item',updated:1,parent:'missing'}]}));});
+test('rejects future versions, duplicate ids and unsafe links',async()=>{await assert.rejects(decodeBackup({...base,version:9,records:[]}));await assert.rejects(decodeBackup({...base,records:[original,original]}));await assert.rejects(decodeBackup({...base,records:[{...original,link:'javascript:alert(1)'}]}));});
+test('version 1 own-format import preserves legacy attached text',async()=>{const r={id:'m1',kind:'message',updated:1,type:'text',text:'我的日记',historicalNote:'旧版保留文字'};const result=await decodeBackup({...base,version:1,records:[r]});assert.deepEqual(result,[r]);});
