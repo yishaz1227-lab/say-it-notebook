@@ -46,7 +46,30 @@ dist/
 └── .openai/  # 托管配置
 ```
 
-这不是可双击 index.html 使用的纯静态站点。可使用 Sites，或根据 `dist/server/wrangler.json` 在兼容 Cloudflare Workers 的环境部署。`dist` 是生成文件，不提交到源码仓库。
+默认 `pnpm build` 保留 Sites / Cloudflare Workers 构建，可根据 `dist/server/wrangler.json` 部署。`dist` 是生成文件，不提交到源码仓库。
+
+## 部署到 Vercel
+
+仓库根目录的 `vercel.json` 已配置独立的 Vite 静态构建：
+
+- Root Directory：仓库根目录。
+- Framework：Vite。
+- Build Command：`pnpm run build:vercel`。
+- Output Directory：`dist/vercel`。
+- 首页产物：`dist/vercel/index.html`。
+
+将 GitHub 仓库导入 Vercel 或推送更新后，由 Vercel 按此配置构建。不要将 Workers 的 `dist/server` 或不含 HTML 首页的 `dist/client` 设置为 Vercel 输出目录。
+
+```sh
+pnpm run build:vercel
+pnpm run preview:vercel
+```
+
+Vercel 入口直接复用 `app/page.tsx` 和 `app/globals.css`，录音、图片、IndexedDB 与 hash 导航不变，不需要服务端 API。默认 `vite.config.ts` 和 `pnpm build` 继续服务于 ChatGPT Sites，不受 Vercel 构建影响。
+
+此前 Vercel 404 的原因是平台没有可部署的 HTML 首页或 Vercel 函数：原构建输出为 Cloudflare Workers。Vinext 的“Some routes could not be classified”是静态分析提示，不代表缺少 `app/page.tsx`，也不是本次需要修复的路由本身。
+
+个人内容按域名分别存储，Sites 和 Vercel 域名不会自动共享记录；迁移内容请使用导出/导入备份。
 
 ## 数据与安全
 

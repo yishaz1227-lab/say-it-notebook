@@ -12,7 +12,10 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "test": "node --test tests/*.test.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:vercel": "vite build --config vite.vercel.config.ts",
+    "preview:vercel": "vite preview --config vite.vercel.config.ts",
+    "test:vercel": "pnpm run build:vercel && node tests/vercel.smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
