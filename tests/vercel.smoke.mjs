@@ -6,6 +6,10 @@ const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.u
 const built = await readFile(new URL(`../${config.outputDirectory}/index.html`, import.meta.url), 'utf8');
 assert.match(built, /<div id="root"><\/div>/);
 assert.match(built, /开口日记/);
+// A slow third-party font must never block the HTML shell or app startup.
+assert.doesNotMatch(built, /<link[^>]+href=["']https?:[^>]+>/i);
+const layout = await readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8');
+assert.doesNotMatch(layout, /<link[^>]+rel=["']stylesheet/);
 assert.doesNotMatch(built, /src="\/main\.tsx"/);
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--config', 'vite.vercel.config.ts', '--host', '127.0.0.1', '--port', '4187', '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 try {

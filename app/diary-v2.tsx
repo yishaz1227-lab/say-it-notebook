@@ -11,22 +11,20 @@ import {uid,type RecordItem} from '@/lib/store';
 const dateLabel=(date:string)=>new Date(date+'T12:00:00').toLocaleDateString('zh-CN',{month:'long',day:'numeric'});
 const timeLabel=(at:number)=>new Date(at).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
 let introSeenInSession=false;
-const INTRO_KEY='sayit-prompt-intro-seen';
-function consumeIntro(){introSeenInSession=true;try{localStorage.setItem(INTRO_KEY,'1')}catch{}}
-function hasSeenIntro(){try{return introSeenInSession||localStorage.getItem(INTRO_KEY)==='1'}catch{return introSeenInSession}}
+// Once per page visit; closing it stays respected while switching sections.
+function consumeIntro(){introSeenInSession=true}
 let visitPrompt=nextPrompt([]);let visitUsed=[visitPrompt.id];
 type Props={records:RecordItem[];date:string;draft:string;onDraftChange:(text:string)=>void;commit:(records:RecordItem[],removed?:string[])=>Promise<void>;onBusy:(value:boolean)=>void;onCalendar:()=>void;onToday:()=>void;menu:(record:RecordItem)=>ReactNode};
 export function DiaryV2({records,date,draft,onDraftChange,commit,onBusy,onCalendar,onToday,menu}:Props){
  const [prompt,setPrompt]=useState<Prompt>(visitPrompt),[activePrompt,setActivePrompt]=useState<Prompt|null>(null),[sheet,setSheet]=useState<'prompt'|'mood'|'done'|'denied'|null>(null),[mood,setMood]=useState(''),[voice,setVoice]=useState(false),[startRequest,setStartRequest]=useState(0),[busy,setBusy]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[hint,setHint]=useState(false),[photos,setPhotos]=useState<RecordItem[]>([]);
- const used=useRef<string[]>(visitUsed),interacted=useRef(!!draft),nudged=useRef(false),photoInput=useRef<HTMLInputElement>(null),textInput=useRef<HTMLTextAreaElement>(null),card=useRef<HTMLElement>(null),composer=useRef<HTMLDivElement>(null),saveLock=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const used=useRef<string[]>(visitUsed),photoInput=useRef<HTMLInputElement>(null),textInput=useRef<HTMLTextAreaElement>(null),card=useRef<HTMLElement>(null),composer=useRef<HTMLDivElement>(null),saveLock=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const today=dayKey(new Date()),historical=date!==today,all=records.filter(r=>r.kind==='message'),messages=all.filter(r=>r.date===date).sort((a,b)=>a.created-b.created),returning=all.length>0,disabled=busy||saving;
  const propsFor=(p:Prompt|null=activePrompt)=>({entry_type:p?'prompt':'free',...(p?{prompt_id:p.id,prompt_category:p.category}:{})});
- function touch(){interacted.current=true;setHint(false)}
+ function touch(){setHint(false)}
  function notify(text:string){setNotice(text);if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>setNotice(''),4500)}
  useEffect(()=>{onBusy(busy||saving||photos.length>0)},[busy,saving,photos.length]);
  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
- useEffect(()=>{if(draft.trim())interacted.current=true},[draft]);
- useEffect(()=>{track('home_viewed');if(historical||hasSeenIntro())return;const onHidden=()=>{if(document.hidden)interacted.current=true};document.addEventListener('visibilitychange',onHidden);const timeout=setTimeout(()=>{if(!interacted.current&&!nudged.current&&!document.hidden&&!hasSeenIntro()){nudged.current=true;consumeIntro();setSheet('prompt')}},9000);return()=>{clearTimeout(timeout);document.removeEventListener('visibilitychange',onHidden)}},[]);
+ useEffect(()=>{track('home_viewed');if(historical||introSeenInSession)return;consumeIntro();setSheet('prompt')},[]);
  useEffect(()=>{if(!card.current||historical)return;const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){track('daily_prompt_viewed',{prompt_id:prompt.id,prompt_category:prompt.category});observer.disconnect()}},{threshold:0.5});observer.observe(card.current);return()=>observer.disconnect()},[prompt.id,historical]);
  function changePrompt(){touch();const next=nextPrompt(used.current);used.current=used.current.length>=PROMPTS.length?[next.id]:[...used.current,next.id];visitPrompt=next;visitUsed=used.current;setPrompt(next);track('prompt_changed',{prompt_id:next.id,prompt_category:next.category})}
  function record(p:Prompt|null){if(disabled)return;touch();setError('');setActivePrompt(p);setSheet(null);setVoice(true);setStartRequest(v=>v+1);track(p?'prompt_record_clicked':'free_record_clicked',propsFor(p));setTimeout(()=>composer.current?.scrollIntoView({behavior:'smooth',block:'center'}),80)}
