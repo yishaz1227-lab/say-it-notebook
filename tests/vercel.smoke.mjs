@@ -11,6 +11,9 @@ assert.doesNotMatch(built, /<link[^>]+href=["']https?:[^>]+>/i);
 const layout = await readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8');
 assert.doesNotMatch(layout, /<link[^>]+rel=["']stylesheet/);
 assert.doesNotMatch(built, /src="\/main\.tsx"/);
+assert.match(built, /rel="preload"[^>]+huiwen-ui-v1\.woff2/);
+const typography = await readFile(new URL('../app/scrapbook.css', import.meta.url), 'utf8');
+assert.match(typography, /font-display:optional/);
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--config', 'vite.vercel.config.ts', '--host', '127.0.0.1', '--port', '4187', '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 try {
   await new Promise((resolve, reject) => {
@@ -30,7 +33,7 @@ try {
   const assets = [...built.matchAll(/(?:src|href)="(\/assets\/[^"<>]+)"/g)].map(m => m[1]);
   assert.ok(assets.some(path => path.endsWith('.js')));
   assert.ok(assets.some(path => path.endsWith('.css')));
-  for (const path of [...assets, '/favicon.svg']) {
+  for (const path of [...assets, '/favicon.svg', '/fonts/huiwen-ui-v1.woff2']) {
     const response = await fetch(base + path);
     assert.equal(response.status, 200, path);
     assert.ok((await response.arrayBuffer()).byteLength > 0, path);
