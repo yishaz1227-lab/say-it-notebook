@@ -14,6 +14,8 @@ assert.doesNotMatch(built, /src="\/main\.tsx"/);
 assert.match(built, /rel="preload"[^>]+huiwen-ui-v1\.woff2/);
 const typography = await readFile(new URL('../app/scrapbook.css', import.meta.url), 'utf8');
 assert.match(typography, /font-display:optional/);
+assert.doesNotMatch(built, /<script[^>]+src="\/posthog-options\.js"/);
+assert.ok(built.indexOf('window.sayitPosthogOptions =') < built.indexOf('posthog.init('));
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--config', 'vite.vercel.config.ts', '--host', '127.0.0.1', '--port', '4187', '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 try {
   await new Promise((resolve, reject) => {
