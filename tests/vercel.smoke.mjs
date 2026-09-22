@@ -11,6 +11,9 @@ assert.doesNotMatch(built, /<link[^>]+href=["']https?:[^>]+>/i);
 const layout = await readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8');
 assert.doesNotMatch(layout, /<link[^>]+rel=["']stylesheet/);
 assert.doesNotMatch(built, /src="\/main\.tsx"/);
+assert.match(built, /<script type="module" data-sayit-app>/);
+assert.match(built, /<style data-sayit-styles>/);
+assert.doesNotMatch(built, /<(?:script|link)[^>]+(?:src|href)="\/assets\//);
 assert.match(built, /rel="preload"[^>]+huiwen-ui-v1\.woff2/);
 const typography = await readFile(new URL('../app/scrapbook.css', import.meta.url), 'utf8');
 assert.match(typography, /font-display:optional/);
@@ -33,15 +36,14 @@ try {
     assert.equal(await response.text(), built, path);
   }
   const assets = [...built.matchAll(/(?:src|href)="(\/assets\/[^"<>]+)"/g)].map(m => m[1]);
-  assert.ok(assets.some(path => path.endsWith('.js')));
-  assert.ok(assets.some(path => path.endsWith('.css')));
+  assert.equal(assets.length, 0);
   for (const path of [...assets, '/favicon.svg', '/fonts/huiwen-ui-v1.woff2']) {
     const response = await fetch(base + path);
     assert.equal(response.status, 200, path);
     assert.ok((await response.arrayBuffer()).byteLength > 0, path);
     assert.ok(!response.headers.get('content-type')?.includes('text/html'), path);
   }
-  console.log('Vercel static smoke passed: / and all four hash entry points return 200; JS, CSS and favicon resolve.');
+  console.log('Vercel static smoke passed: / and all four hash entry points return 200; inlined app/styles and font/favicon checks pass.');
 } finally {
   server.kill('SIGTERM');
 }

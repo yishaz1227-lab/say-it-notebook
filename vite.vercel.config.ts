@@ -24,5 +24,6 @@ export default defineConfig({
   build: {
     outDir: fileURLToPath(new URL('./dist/vercel', import.meta.url)),
     emptyOutDir: true,
+    rolldownOptions: { output: { codeSplitting: false } },
   },
 });

@@ -13,7 +13,7 @@
     "format": "oxfmt",
     "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "build:vercel": "vite build --config vite.vercel.config.ts",
+    "build:vercel": "vite build --config vite.vercel.config.ts && node scripts/inline-vercel.mjs",
     "preview:vercel": "vite preview --config vite.vercel.config.ts",
     "test:vercel": "pnpm run build:vercel && node tests/vercel.smoke.mjs"
   },

@@ -1,5 +1,9 @@
 // Opt-in, local-only timing panel. No requests, analytics, or persisted data.
 (function () {
+  let lcp = null;
+  if ('PerformanceObserver' in window) {
+    try { new PerformanceObserver(list => { for (const entry of list.getEntries()) lcp = {time:Math.round(entry.startTime),element:entry.element?.tagName || null}; }).observe({type:'largest-contentful-paint',buffered:true}); } catch {}
+  }
   const render = () => {
     let panel = document.getElementById('sayit-performance');
     if (!panel) {
@@ -13,7 +17,7 @@
     const interactive = performance.getEntriesByName('sayit-interactive')[0];
     const sec = v => Math.round(v) + ' ms';
     const resources = performance.getEntriesByType('resource').filter(r => ['script','css','link'].includes(r.initiatorType)).map(r => ({file:new URL(r.name).pathname.split('/').pop(),start:sec(r.startTime),end:sec(r.responseEnd),duration:sec(r.duration),bytes:r.transferSize}));
-    panel.textContent = JSON.stringify({documentResponse:nav ? sec(nav.responseStart) : null,documentFinished:nav ? sec(nav.responseEnd) : null,domReady:nav ? sec(nav.domContentLoadedEventEnd) : null,firstPaint:performance.getEntriesByName('first-contentful-paint').map(p=>sec(p.startTime)),appInteractive:interactive ? sec(interactive.startTime) : 'pending',resources},null,2);
+    panel.textContent = JSON.stringify({largestContent:lcp,documentResponse:nav ? sec(nav.responseStart) : null,documentFinished:nav ? sec(nav.responseEnd) : null,domReady:nav ? sec(nav.domContentLoadedEventEnd) : null,firstPaint:performance.getEntriesByName('first-contentful-paint').map(p=>sec(p.startTime)),appInteractive:interactive ? sec(interactive.startTime) : 'pending',resources},null,2);
   };
   let runs=0;const interval=setInterval(()=>{render();if(++runs>=20)clearInterval(interval)},500);
 })();
