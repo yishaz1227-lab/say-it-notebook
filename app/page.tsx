@@ -19,6 +19,7 @@ const today=()=>dayKey(new Date());
 const dateLabel=(s:string)=>new Date(s+'T12:00:00').toLocaleDateString('zh-CN',{month:'long',day:'numeric'});
 const timeLabel=(t:number)=>new Date(t).toLocaleString('zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 export default function Home(){
+useEffect(()=>{if(!performance.getEntriesByName("sayit-interactive").length)performance.mark("sayit-interactive")},[]);
 const [processingPhotos,setProcessingPhotos]=useState(false);
 const [records,setRecords]=useState<RecordItem[]>([]),[ready,setReady]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[view,setView]=useState('diary'),[selected,setSelected]=useState(''),[date,setDate]=useState(today),[busy,setBusy]=useState(false),[saving,setSaving]=useState(false),[modal,setModal]=useState<any>(null),[confirm,setConfirm]=useState<any>(null),[form,setForm]=useState<any>({}),[filter,setFilter]=useState('全部'),[promptText,setPromptText]=useState(''),[voice,setVoice]=useState(false),[draft,setDraft]=useState(''),[editor,setEditor]=useState<any>(null),[hideText,setHideText]=useState(false),[mode,setMode]=useState('看原文练习'),[pictures,setPictures]=useState<RecordItem[]>([]),[estimate,setEstimate]=useState<any>(null),[incoming,setIncoming]=useState<RecordItem[]|null>(null),[replace,setReplace]=useState(false);
 const dateRef=useRef(today()),switchingDate=useRef(false);

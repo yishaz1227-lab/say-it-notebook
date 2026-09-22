@@ -24,5 +24,6 @@
     <div id="root"></div>
     <noscript>请启用 JavaScript，以使用日记、录音和本地保存功能。</noscript>
     <script type="module" src="/main.tsx"></script>
+    <script>if(new URLSearchParams(location.search).get('performance')==='1'){var diagnostic=document.createElement('script');diagnostic.src='/performance-diagnostics.js';diagnostic.async=true;document.body.appendChild(diagnostic)}</script>
   </body>
 </html>
